@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+    <string name="HP">HP</string>
+    <string name="HitPoints">Hit Points</string>
+    <string name="STUN">STUN</string>
+    <string name="Stun">Stun</string>
+    <string name="GOOD">GOOD</string>
+    <string name="BAD">BAD</string>
+    <string name="STUNMAX">STUN MAX</string>
+    <string name="STUNDMG">STUN DMG</string>
+    <string name="VP">VP</string>
+    <string name="VigilantePoints">Vigilante Points</string>
+    <string name="power_label_costsource">Source</string>
+    <string name="power_label_efforttarget">Target</string>
+
+    <string name="char_label_stun">Stun</string>
+
+    <string name="ct_label_stun">STUN</string>
+    <string name="ct_tooltip_stundmg">Stun damage</string>
+
+    <string name="options_header_vc">Vigilante City</string>
+    <string name="option_label_HPDS">HP Damage does 1 STUN</string>
+    <string name="option_label_MINS">Attacks always deal 1 STUN</string>
+
+    <string name="desktop_tooltip_stun">Turns manual dice into STUN effort</string>
+    <string name="desktop_tooltip_effort">Turns manual dice into HP effort</string>
+</root>

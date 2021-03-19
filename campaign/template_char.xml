@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+    <template name="checkbox_vp_center">
+        <button_checkbox>
+				<anchored height="20" width="20">
+					<left anchor="center" offset="-10"/>
+				</anchored>
+                <readonly />
+                <default>1</default>
+			</button_checkbox>
+    </template>
+    <template name="checkbox_vp_right">
+        <button_checkbox>
+				<anchored height="20" width="20">
+					<top offset="0"/>
+					<left anchor="right" relation="relative" offset="0" />
+				</anchored>
+			</button_checkbox>
+    </template>
+    <template name="checkbox_vp_left">
+        <button_checkbox>
+				<anchored height="20" width="20">
+					<top offset="0"/>
+					<right anchor="left" relation="relative" offset="0" />
+				</anchored>
+			</button_checkbox>
+    </template>
+</root>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root version="3.3" release="1.0">
+	<announcement text="Booting up Vigilante City" font="emotefont" />
+	<properties>
+		<name>ICRPG - Vigilante City</name>
+		<version>1.0</version>
+		<author>George Taray</author>
+		<description>Supports Runehammer's Vigilante City setting for ICRPG.</description>
+		<ruleset>
+			<name>ICRPG</name>
+		</ruleset>
+		<loadorder>40</loadorder>
+	</properties>
+	<base>
+		<includefile source="gameelements.xml" />
+		
+		<!-- Campaign -->		
+		<includefile source="campaign/record_char_main.xml" />
+		<includefile source="campaign/record_power.xml" />
+		<includefile source="campaign/record_power_roll.xml" />
+		<includefile source="campaign/template_char.xml" />
+
+		<includefile source="campaign/record_npc.xml" />
+
+		<!-- CT -->
+		<includefile source="ct/ct_client.xml" />
+		<includefile source="ct/ct_host.xml" />
+
+		<!-- Desktop -->
+		<includefile source="desktop/desktop_classes.xml" />
+
+		<!-- Strings -->
+		<includefile source="strings/strings.xml" />
+
+		<!-- Scripts -->
+		<script name="VigilanteCity" file="scripts/vigilantecity.lua" />
+		<script name="ActionStun" file="scripts/manager_action_stun.lua" />
+		<script name="ActionAttempt2" file="scripts/manager_action_attempt2.lua" />
+		<script name="ActorManagerVC" file="scripts/manager_actor_VC.lua" />
+		<script name="DamageState" file="scripts/damageState.lua" />
+	</base>
+</root>

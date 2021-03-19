@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+	<!--
+		The room target that should be displayed to the users at all time. This is intended to be used
+		within a panel on the desktop.
+	-->
+    <windowclass name="modifierstack" merge="join">
+        <sizelimits>
+			<minimum width="200" />
+		</sizelimits>
+        <sheetdata>
+            <button_modifierkey name="EFFORT">
+                <bounds>135,8,25,16</bounds>
+                <text>HP</text>
+                <tooltip textres="desktop_tooltip_effort" />
+                <script>
+                    local bInit = false;
+                    function onInit()
+                        if ModifierStack.getModifierKey(getName()) then
+                            setValue(1);
+                        end
+                        bInit = true;
+                    end
+                    function onValueChanged()
+                        if bInit then
+                            if getValue() ~= 0 then
+                                ModifierStack.setModifierKey(getName(), true);
+
+                                if window.STUN then
+                                    window.STUN.setValue(0);
+                                end
+                            else
+                                ModifierStack.setModifierKey(getName(), false);
+                            end
+                        end
+                    end
+                </script>
+            </button_modifierkey>
+            <button_modifierkey name="STUN">
+                <bounds>170,8,25,16</bounds>
+                <text>SP</text>
+                <tooltip textres="desktop_tooltip_stun" />
+                <script>
+                    local bInit = false;
+                    function onInit()
+                        if ModifierStack.getModifierKey(getName()) then
+                            setValue(1);
+                        end
+                        bInit = true;
+                    end
+                    function onValueChanged()
+                        if bInit then
+                            if getValue() ~= 0 then
+                                ModifierStack.setModifierKey(getName(), true);
+
+                                if window.EFFORT then
+                                    window.EFFORT.setValue(0);
+                                end
+                            else
+                                ModifierStack.setModifierKey(getName(), false);
+                            end
+                        end
+                    end
+                </script>
+            </button_modifierkey>
+            <button_modifierkey name="HEAL">
+                <bounds>135,35,60,16</bounds>
+                <text>Heal</text>
+                <tooltip textres="desktop_tooltip_healing" />
+            </button_modifierkey>
+        </sheetdata> 
+    </windowclass>
+</root>

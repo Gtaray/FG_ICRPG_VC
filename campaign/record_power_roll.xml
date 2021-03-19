@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+	<windowclass name="power_attempt_editor_main" merge="join">
+        <sheetdata>
+            <label_column name="cost_source_label" insertbefore="cost_trigger_label">
+                <static textres="power_label_costsource" />
+            </label_column>
+            <button_stringcycler name="costsource" insertbefore="cost_trigger_label">
+				<anchored width="150" height="20">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="97" />
+				</anchored>
+				<parameters>
+					<defaultlabelres>dash</defaultlabelres>
+					<labelsres>HitPoints|Stun</labelsres>
+					<values>hp|stun</values>
+				</parameters>
+			</button_stringcycler>
+        </sheetdata>
+    </windowclass>
+
+	<windowclass name="power_effort_editor_main" merge="join">
+		<sheetdata>
+			<label_column name="target_label" insertbefore="header_damage">
+				<static textres="power_label_efforttarget" />
+			</label_column>
+			<button_stringcycler name="efforttarget" insertbefore="header_damage">
+				<anchored width="150" height="20">
+					<top parent="columnanchor" anchor="bottom" relation="relative" offset="7" />
+					<left offset="97" />
+				</anchored>
+				<parameters>
+					<defaultlabelres>Stun</defaultlabelres>
+					<labelsres>HitPoints</labelsres>
+					<values>hp</values>
+				</parameters>
+			</button_stringcycler>
+		</sheetdata>
+	</windowclass>
+</root>

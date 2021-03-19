@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+	<windowclass name="power_page_stats" merge="join">
+		<sheetdata>
+			<!-- HP -->
+			<basicnumber name="hp" merge="join">
+				<anchored to="armoricon" position="righthigh" offset="15,11" width="40" height="24" />
+			</basicnumber>
+
+			<!-- Stun max and damage -->
+			<basicnumber name="stun" source="health.stun">
+				<default>10</default>
+				<anchored to="armoricon" position="righthigh" offset="15,53" width="40" height="24" />
+			</basicnumber>
+			<label_fieldtop name="stun_label">
+				<anchored to="stun" position="aboveleft" offset="-7,1" width="55"/>
+				<static textres="STUNMAX" />
+			</label_fieldtop>
+			<basicnumber name="stundmg" source="health.stundmg">
+				<default>0</default>
+				<anchored to="stun" position="righthigh" offset="15,0" width="40" height="24" />
+			</basicnumber>
+			<label_fieldtop name="stundmg_label">
+				<anchored to="stundmg" position="aboveleft" offset="-7,1" width="55"/>
+				<static textres="STUNDMG" />
+			</label_fieldtop>
+		</sheetdata>
+	</windowclass>
+</root>

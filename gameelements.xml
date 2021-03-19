@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+
+	<!-- Available Dice in ICRPG -->
+	<die name="d4">
+		<icon>d4icon</icon>
+		<position>640,-68</position>
+	</die>
+	<die name="d6">
+		<icon>d6icon</icon>
+		<position>590,-68</position>
+	</die>
+	<die name="d8">
+		<icon>d8icon</icon>
+		<position>540,-68</position>
+	</die>
+	<die name="d10">
+		<icon>d10icon</icon>
+		<position>490,-68</position>
+	</die>
+	<die name="d12">
+		<icon>d12icon</icon>
+		<position>440,-68</position>
+	</die>
+	<die name="d20">
+		<icon>d20icon</icon>
+		<position>390,-68</position>
+	</die>
+
+	<!-- Settings to Remove From Core -->
+	<die name="dF" merge="delete" />
+</root>

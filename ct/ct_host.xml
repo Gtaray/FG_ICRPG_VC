@@ -1,0 +1,53 @@
+<root>
+    <windowclass name="combattracker_host" merge="join">
+        <sheetdata>
+            <label_ct name="label_hp" merge="join">
+				<static textres="ct_label_wounds" />
+			</label_ct>
+			<label_ct name="label_wounds" merge="join">
+				<static textres="ct_label_stun" merge="replace" />
+			</label_ct>
+        </sheetdata>
+    </windowclass>
+
+    <windowclass name="ct_entry" merge="join">
+        <script file="ct/scripts/ct_entry.lua" />
+        <sheetdata>
+            <number_ct_crosslink name="hpmax" source="health.hp">
+                <anchored to="rightanchor" position="righthigh" width="0" height="0" />
+                <default>10</default>
+                <invisible />
+            </number_ct_crosslink>
+            <number_ct_crosslink name="stun" source="health.stun">
+                <anchored to="rightanchor" position="righthigh" width="0" height="0" />
+                <default>10</default>
+                <invisible />
+            </number_ct_crosslink>
+            <number_ct_crosslink name="hp" merge="delete" />
+            <number_ct_crosslink name="stundmg" source="health.stundmg" insertbefore="wounds">
+                <anchored to="rightanchor" width="30" height="20">
+                    <top />
+                    <right anchor="left" relation="relative" offset="-10" />
+                </anchored>
+                <tabtarget prev="wounds" next="initresult"/>
+                <script>
+                    function handleDrop(draginfo)
+                        if draginfo.getType() == "number" then
+                            local node = window.getDatabaseNode();
+                            local rActor = ActorManager.resolveActor(node);
+                            -- adjust to do STUN dmg
+                            ActionEffort.applyDamage(nil, rActor, CombatManager.isCTHidden(node), draginfo.getDescription(), draginfo.getNumberData());
+                        end
+                    end
+
+                    function update()
+                        window.onStunChanged();
+                    end
+                </script>
+            </number_ct_crosslink>
+            <number_ct_crosslink name="wounds" merge="join">
+				<tabtarget prev="name" next="stundmg" merge="replace" />
+			</number_ct_crosslink>
+        </sheetdata>
+    </windowclass>
+</root>

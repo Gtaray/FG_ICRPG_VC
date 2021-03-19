@@ -1,0 +1,54 @@
+<root>
+    <windowclass name="combattracker_client" merge="join">
+        <sheetdata>
+            <label_ct_right name="label_wounds" merge="join">
+                <anchored width="35" merge="join"/>
+				<static textres="ct_label_stun" />
+                <tooltip textres="ct_tooltip_stundmg" />
+			</label_ct_right>
+			<label_ct_right name="label_hp" merge="join">
+				<static textres="ct_label_wounds" />
+                <tooltip textres="ct_tooltip_wounds" />
+			</label_ct_right>
+        </sheetdata>
+    </windowclass>
+
+    <windowclass name="client_ct_entry" merge="join">
+        <script file="ct/scripts/clientct_entry.lua" />
+        <sheetdata> 
+            <number_clientct_stundmg name="stundmg" source="health.stundmg" insertbefore="wounds" />
+            <number_clientct_hp name="hptotal" merge="delete" />	
+        </sheetdata>
+    </windowclass>
+
+
+    <template name="number_clientct_wounds">
+		<number_ct_static name="wounds">
+			<anchored to="stundmg" width="30" height="20">
+				<top />
+				<right offset="-40" />
+			</anchored>
+			<min value="0" />
+			<script>
+				function onValueChanged()
+					window.onHealthChanged();
+				end
+			</script>
+		</number_ct_static>
+	</template>
+    <template name="number_clientct_stundmg">
+		<number_ct_static>
+			<anchored to="healthbase" width="30" height="20">
+				<top />
+				<right />
+			</anchored>
+			<min value="0" />
+            <hideonvalue value="-1" />F
+			<script>
+				function onValueChanged()
+					window.onStunChanged();
+				end
+			</script>
+		</number_ct_static>
+	</template>
+</root>

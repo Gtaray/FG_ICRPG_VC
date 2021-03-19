@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- 
+  Please see the license.html file included with this distribution for 
+  attribution and copyright information.
+-->
+
+<root>
+    <windowclass name="charsheet_main" merge="join">
+		<script file="campaign/scripts/vigilantepoints.lua" />
+        <sheetdata>
+			<frame_char name="defenseframe">
+				<bounds>20,0,-20,135</bounds>
+			</frame_char>
+
+			<genericcontrol name="hearticon" merge="delete" />
+			<basicnumber name="hearts" merge="join">
+				<anchored to="defenseframe" position="insidetopleft" offset="30,22" width="40" height="24" merge="replace">
+				</anchored>
+			</basicnumber>
+			<basicnumber name="hp" merge="join">
+				<anchored to="hearts" position="righthigh" offset="20,0" width="40" height="24" merge="replace">
+				</anchored>
+			</basicnumber>
+			<basicnumber name="wounds" merge="join">
+				<anchored to="hp" position="righthigh" offset="20,0" width="40" height="24" merge="replace">
+				</anchored>
+			</basicnumber>
+
+			<basicnumber name="stun" source="health.stun" insertbefore="armoricon">
+				<anchored to="hp" position="belowleft" offset="-25,18" height="24" width="40">
+				</anchored>
+				<default>10</default>
+			</basicnumber>
+			<label_fieldtop name="stun_label">
+				<anchored to="stun" position="aboveleft" offset="-7,1" width="55"/>
+				<static textres="STUNMAX" />
+			</label_fieldtop>
+			<basicnumber name="stundmg" source="health.stundmg" insertbefore="armoricon">
+				<anchored to="wounds" position="belowleft" offset="-25,18" height="24" width="40">
+				</anchored>
+				<default>0</default>
+			</basicnumber>
+			<label_fieldtop name="stundmg_label">
+				<anchored to="stundmg" position="aboveleft" offset="-7,1" width="55"/>
+				<static textres="STUNDMG" />
+			</label_fieldtop>
+
+			<genericcontrol name="armoricon" merge="join">
+				<anchored to="wounds" position="righthigh" offset="30,-10" width="64" height="79" merge="replace" />
+			</genericcontrol>
+
+			<!-- Vigilante Point Section-->
+			<label name="vp_label" insertbefore="statsframe">
+				<font>charstatlabel</font>
+				<anchored to="defenseframe" width="100" height="24">
+					<right anchor="center" offset="50" />
+					<bottom anchor="bototm" offset="-23" />
+				</anchored>
+				<static textres="VP" />
+				<center />
+			</label>
+			<label name="good_label" insertbefore="statsframe">
+				<font>charstatlabel</font>
+				<anchored to="vp_label" position="righthigh" offset="10,0" width="40" height="24" />
+				<static textres="GOOD" />
+				<center />
+			</label>
+			<label name="bad_label" insertbefore="statsframe">
+				<font>charstatlabel</font>
+				<anchored to="vp_label" position="lefthigh" offset="10,0" width="40" height="24" />
+				<static textres="BAD" />
+				<center />
+			</label>
+			<checkbox_vp_center name="vp10">
+				<anchored to="vp_label">
+					<top anchor="bottom" offset="-5"/>
+				</anchored>
+			</checkbox_vp_center>
+
+			<checkbox_vp_left name="vp9" source="vp.vp9">
+				<anchored to="vp10" />
+			</checkbox_vp_left>
+			<checkbox_vp_left name="vp8" source="vp.vp8">
+				<anchored to="vp10" />
+			</checkbox_vp_left>
+			<checkbox_vp_left name="vp7" source="vp.vp7">
+				<anchored to="vp10" />
+			</checkbox_vp_left>
+			<checkbox_vp_left name="vp6" source="vp.vp6">
+				<anchored to="vp10" />
+			</checkbox_vp_left>
+			
+			<checkbox_vp_right name="vp11" source="vp.vp11">
+				<anchored to="vp10" />
+			</checkbox_vp_right>
+			<checkbox_vp_right name="vp12" source="vp.vp12">
+				<anchored to="vp10" />
+			</checkbox_vp_right>
+			<checkbox_vp_right name="vp13" source="vp.vp13">
+				<anchored to="vp10" />
+			</checkbox_vp_right>
+			<checkbox_vp_right name="vp14" source="vp.vp14">
+				<anchored to="vp10" />
+			</checkbox_vp_right>
+        </sheetdata>
+    </windowclass>
+</root>
