@@ -32,6 +32,9 @@ function registerOptions()
     -- Dealing HP damage also does 1 STUN damage
 	OptionsManager.registerOption2("HPDS", false, "option_header_vc", "option_label_HPDS", "option_entry_cycler", 
     {	labels = "option_val_yes", values = "on", baselabel = "option_val_no", baseval = "off", default = "on" });
+    -- What damage type can harm chunks
+	OptionsManager.registerOption2("DTFC", false, "option_header_vc", "option_label_DTFC", "option_entry_cycler", 
+    {	labels = "option_val_hpdmg|option_val_hpspdmg", values = "hp|both", baselabel = "option_val_spdmg", baseval = "sp", default = "both" });
 end
 
 function getPCPowerAction(nodeAction)
@@ -49,10 +52,18 @@ function getPCPowerAction(nodeAction)
             rAction.sEffortTarget = nodeTarget.getValue()
         end
     end
+    if rAction.type == "heal" then
+        local nodeTarget = nodeAction.getChild("efforttarget");
+        if nodeTarget then
+            rAction.sEffortTarget = nodeTarget.getValue()
+        end
+    end
 
     return rAction, rActor;
 end
 
+-- This does base encoding. Both the modifier buttons, as well as making
+-- sure that all effort has HP or STUN tags.
 function encodeEffortAndStun(rRoll, bEffort)
 
     -- Add HP or STUN based on button
@@ -60,15 +71,45 @@ function encodeEffortAndStun(rRoll, bEffort)
     local bStun = ModifierStack.getModifierKey("STUN");
 
     -- Do base encoding
-    fEncodeEffort(rRoll, bHP or bStun);
+    -- if this is already an effort type roll, don't encode it.
+    if rRoll.sType ~= "effort" then
+        fEncodeEffort(rRoll, bHP or bStun);
+    end
+    local matchHP = rRoll.sDesc:match("%[HP%]");
+    local matchStun = rRoll.sDesc:match("%[STUN%]");
 
     if bHp then
         -- Do base encoding
-        rRoll.sDesc = rRoll.sDesc .. " [HP]";
-    elseif bStun then
+        if matchStun then
+            if matchHP then
+                -- get rid of stun tag
+                rRoll.sDesc = rRoll.sDesc:gsub("%[STUN%]", "");
+            else
+                -- replace stun tag
+                rRoll.sDesc = rRoll.sDesc:gsub("%[STUN%]", "[HP]");
+            end
+        elseif not matchHP then
+            -- only add the HP tag if it's not already there
+            rRoll.sDesc = rRoll.sDesc .. " [HP]";
+        end
+    end
+    if bStun then
         -- Do base encoding
-        rRoll.sDesc = rRoll.sDesc .. " [STUN]";
+        if matchHP then
+            if matchStun then
+                rRoll.sDesc = rRoll.sDesc:gsub("%[HP%]", "")
+            else    
+                rRoll.sDesc = rRoll.sDesc:gsub("%[HP%]", "[STUN]")
+            end
+        elseif not matchStun then
+            rRoll.sDesc = rRoll.sDesc .. " [STUN]";
+        end
+    end
 
+    -- last case. Neither button is pressed, and neither HP/STUN is matched
+    if not bHp and not bStun and not matchHP and not matchStun then
+        -- just add stun. It's the default damage type.
+        rRoll.sDesc = rRoll.sDesc .. " [STUN]";
     end
 end
 

@@ -17,7 +17,7 @@
     <string name="VP">VP</string>
     <string name="VigilantePoints">Vigilante Points</string>
     <string name="power_label_costsource">Source</string>
-    <string name="power_label_efforttarget">Target</string>
+    <string name="power_label_efforttarget">Resource</string>
 
     <string name="char_label_stun">Stun</string>
 
@@ -27,6 +27,10 @@
     <string name="options_header_vc">Vigilante City</string>
     <string name="option_label_HPDS">HP Damage does 1 STUN</string>
     <string name="option_label_MINS">Attacks always deal 1 STUN</string>
+    <string name="option_label_DTFC">Chunks can be damaged by</string>
+    <string name="option_val_hpdmg">HP Damage</string>
+    <string name="option_val_spdmg">SP Damage</string>
+    <string name="option_val_hpspdmg">All Damage</string>
 
     <string name="desktop_tooltip_stun">Turns manual dice into STUN effort</string>
     <string name="desktop_tooltip_effort">Turns manual dice into HP effort</string>

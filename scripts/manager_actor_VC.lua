@@ -22,8 +22,10 @@ function getStunPercent(v)
     if not Session.IsHost and (not bIsPC) then
         sStatus = DB.getValue(nodeActor, "status", "");
     else
-        if nPercentWounded >= 1 then
+        if nPercentWounded > 1 then
             sStatus = "Stunned";
+        elseif nPercentWounded == 1 then
+            sStatus = "Fatigued";
         elseif OptionsManager.isOption("WNDC", "detailed") then
             if nPercentWounded >= .75 then
                 sStatus = ActorHealthManager.STATUS_CRITICAL;

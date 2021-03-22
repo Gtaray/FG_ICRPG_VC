@@ -108,16 +108,35 @@ function parseComponents()
 				end
 
 				-- if the match is an effort type, then check for STUN or HP 
-					if sLower == "stun" or sLower == "sp" or sLower == "hp" or sLower == "hit points" then
-						startpos = aWordStats[i].startpos;
-						endpos = aWordStats[i+1].endpos;
-						sType = "effort";
-						sEffortTarget = "stun";
+				if sLower == "stun" or sLower == "sp" or sLower == "hp" or sLower == "hit points" then
+					startpos = aWordStats[i].startpos;
+					endpos = aWordStats[i+1].endpos;
+					sType = "effort";
+					sEffortTarget = "stun";
 
-						if sLower == "hp" or sLower == "hit points" then
-							sEffortTarget = "hp";
+					if sLower == "hp" or sLower == "hit points" then
+						sEffortTarget = "hp";
+					end
+
+					-- Check if next word is "and"
+					if aWords[i+2] then
+						local sAnd = aWords[i+2]:gsub('[%p%c%s]', ''):lower();
+						if sAnd == "and" then
+							-- check if the next word is hp, stun, hit points, or sp
+							if aWords[i+3] then
+								local sOther = aWords[i+3]:gsub('[%p%c%s]', ''):lower();
+								-- Only consider if the second effort type is opposite the last one
+								if (sOther == "stun" or sOther == "sp") and sEffortTarget == "hp" then
+									endpos = aWordStats[i+3].endpos;
+									sEffortTarget = "stun,hp";
+								elseif (sOther == "hp" or sOther == "hit points") and sEffortTarget == "stun" then
+									endpos = aWordStats[i+3].endpos;
+									sEffortTarget = "stun,hp";
+								end
+							end
 						end
 					end
+				end
 			end
 
 			sDice = sMultiplier	.. sDice;	
@@ -220,7 +239,10 @@ function action(draginfo)
 			end
 
 			if comp.sEffortTarget then
-				rRoll.sDesc = rRoll.sDesc .. " [" .. comp.sEffortTarget:upper() .. "]";
+				local aDmgTypes = StringManager.split(comp.sEffortTarget, ',');
+				for _,dmg in pairs(aDmgTypes) do
+					rRoll.sDesc = rRoll.sDesc .. " [" .. dmg:upper() .. "]";
+				end
 			end
 			
 			rRoll.nMod = mod;

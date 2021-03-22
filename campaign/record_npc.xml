@@ -8,10 +8,10 @@
 <root>	
 	<windowclass name="npc_main" merge="join">
 		<sheetdata>
-			<label_column name="stun_label" insertbefore="actioncount_label">
+			<label_column name="stun_label" insertbefore="space_label">
 				<static textres="char_label_stun" />
 			</label_column>
-			<number_columnh name="stun" insertbefore="actioncount_label" source="health.stun">
+			<number_columnh name="stun" insertbefore="space_label" source="health.stun">
 				<default>10</default>
 			</number_columnh>
 		</sheetdata>

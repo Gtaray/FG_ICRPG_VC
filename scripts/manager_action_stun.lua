@@ -10,13 +10,16 @@ function onInit()
     fApplyDamageToTarget = ActionEffort.applyDamageToTarget;
     ActionEffort.getRoll = getRoll;
     ActionEffort.getPowerRoll = getPowerRoll;
+    ActionEffort.performNPCRoll = performNPCRoll;
     ActionEffort.applyDamageToChunk = applyDamageToChunk;
     ActionEffort.applyDamageToTarget = applyDamageOrStun;
 end
 
+-- GETTING ROLLS
+
 function getRoll(rActor, sStat, sDie, nTargetDC, bSecretRoll)
     local rRoll = fGetEffortRoll(rActor, sStat, sDie, nTargetDC, bSecretRoll);
-    rRoll.sDesc = rRoll.sDesc .. " [STUN]";
+    VigilanteCity.encodeEffortAndStun(rRoll);
     return rRoll;
 end
 
@@ -27,28 +30,61 @@ function getPowerRoll(rActor, rAction, bHeal)
         dmgtype = "HP";
     end
     rRoll.sDesc = rRoll.sDesc .. " [" .. dmgtype:upper() .. "]";
+    VigilanteCity.encodeEffortAndStun(rRoll);
     return rRoll;
 end
 
+function performNPCRoll(draginfo, rActor, rRoll)
+	if Session.IsHost and CombatManager.isCTHidden(ActorManager.getCTNode(rActor)) then
+		rRoll.bSecret = true;
+	end
+    VigilanteCity.encodeEffortAndStun(rRoll);
+
+	ActionsManager.performAction(draginfo, rActor, rRoll);
+end
+
+--- APPLYING DAMAGE
+
 function applyDamageToChunk(rSource, rTarget, bSecret, sDamage, nTotal)
-    local bStun = string.match(sDamage, "%[STUN%]")
-    -- Only apply HP damage to chunks. 
-    if bStun then
-	    ActionEffort.messageDamage(rSource, rTarget, bSecret, false, "0", "");
-    else
+    local bChunkDmgOption = OptionsManager.getOption("DTFC");
+    local bStun = string.match(sDamage, "%[STUN%]");
+    local bHP = string.match(sDamage, "%[HP%]");
+    
+    if bChunkDmgOption == "both" and (bStun or bHP) then
         fApplyDamageToChunk(rSource, rTarget, bSecret, sDamage, nTotal);
+    elseif bChunkDmgOption == "hp" and bHP then
+        fApplyDamageToChunk(rSource, rTarget, bSecret, sDamage, nTotal);
+    elseif bChunkDmgOption == "sp" and bStun then
+        fApplyDamageToChunk(rSource, rTarget, bSecret, sDamage, nTotal);
+    else
+	    ActionEffort.messageDamage(rSource, rTarget, bSecret, false, "0", "");        
     end
 end
 
 function applyDamageOrStun(rSource, rTarget, bSecret, sDamage, nTotal)
-    local bStun = string.match(sDamage, "%[STUN%]")
-    if bStun then
+    local bStun = string.match(sDamage, "%[STUN%]");
+    local bHP = string.match(sDamage, "%[HP%]");
+    local bHeal = string.match(sDamage, "%[HEAL%]") or nTotal < 0;
+
+    local nodeTarget = ActorManager.getCreatureNode(rTarget);
+    local nTotalStun = DB.getValue(nodeTarget, "health.stun", 0);
+    
+    -- if stun is explicitly set, or HP is NOT explicitly set
+    if bStun or (not bHP) then
         applyStunToTarget(rSource, rTarget, bSecret, sDamage, nTotal);
-    else
+    end
+    -- If HP is present, also deduct that. This is so that you deduct from both resources on the same roll. Mostly used by NPCs.
+    if bHP then
         fApplyDamageToTarget(rSource, rTarget, bSecret, sDamage, nTotal);
         -- If option is set, apply 1 STUN with HP damage
+        -- But don't do this is the target's max stun is 0.
         local bApplyStunOnHP = OptionsManager.getOption("HPDS") == "on";
-        if bApplyStunOnHP then
+        -- Only apply this drain if:
+            -- Setting is set
+            -- NOT already doing damage to stun
+            -- The character's max STUN is more than 0
+            -- This is not a heal
+        if bApplyStunOnHP and (not bStun) and (nTotalStun > 0) and (not bHeal) then
             applyStunToTarget(rSource, rTarget, bSecret, "[DRAIN]", 0);
         end
     end
@@ -58,6 +94,7 @@ function applyStunToTarget(rSource, rTarget, bSecret, sDamage, nTotal)
     local nodeTarget = ActorManager.getCreatureNode(rTarget);
 	local bHeal = string.match(sDamage, "%[HEAL%]") or nTotal < 0;
     local bDrain = string.match(sDamage, "%[DRAIN%]");
+    local bImpervious = false;
 
 	local nTotalStun, nStunDmg, nRemainder;
 	nTotalStun = DB.getValue(nodeTarget, "health.stun", 0);
@@ -67,7 +104,7 @@ function applyStunToTarget(rSource, rTarget, bSecret, sDamage, nTotal)
 	
 	-- get the current status
 	local _,sOriginalStatus = ActorManagerVC.getStunPercent(rTarget);
-
+    
 	if bHeal then
 		if nStunDmg <= 0 then
 			table.insert(aNotifications, "[NOT DAMAGED]");
@@ -76,7 +113,13 @@ function applyStunToTarget(rSource, rTarget, bSecret, sDamage, nTotal)
 			table.insert(aNotifications, " [HEALING]");
 		end
 	else
-        local nAdjustedWounds = 0;
+        -- if NPC has max 0 HP, then it is immune to all damage
+        if not ActorManager.isPC(rTarget) and nTotalStun <= 0 then
+            nTotal = 0;
+            bImpervious = true;
+            table.insert(aNotifications, "[IMPERVIOUS]");
+        end
+
         if nTotal > 0 then
             local piercing = sDamage:match("%[PIERCING%]");
             if piercing == nil and bDrain == nil then
@@ -101,13 +144,16 @@ function applyStunToTarget(rSource, rTarget, bSecret, sDamage, nTotal)
 
         -- only do this if damage would otherwise be 0, or the previous attack missed
         local bApplyMinStun = OptionsManager.getOption("MINS") == "on";
-        if bApplyMinStun and (bDamageState == false or nTotal == 0) then
+        if bApplyMinStun and (bImpervious == false) and (bDamageState == false or nTotal == 0) then
             nTotal = 1;
             table.insert(aNotifications, "[DRAIN]");
         end
 
         nStunDmg = math.max(nStunDmg + nTotal, 0);
 	end
+
+    -- always notify that this was applied to stun 
+    table.insert(aNotifications, "[STUN]");
 
 	-- set wounds field
 	DB.setValue(nodeTarget, "health.stundmg", "number", nStunDmg);
