@@ -25,14 +25,12 @@ function onEffectActorStartTurn(nodeActor, nodeEffect)
 end
 
 function applyOngoingDamageAdjustment(nodeActor, nodeEffect, rEffectComp)
-    Debug.chat('apply ongoing adjustment');
 	if #(rEffectComp.dice) == 0 and rEffectComp.mod == 0 then
 		return;
 	end
 	
 	local rTarget = ActorManager.resolveActor(nodeActor);
     local sType = rEffectComp.type:lower();
-    Debug.chat(sType);
 	if sType == "regen" then
 		local nPercentWounded = ActorManagerICRPG.getWoundPercent(rTarget);
 		

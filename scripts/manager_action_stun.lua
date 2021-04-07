@@ -2,20 +2,25 @@ local fGetEffortRoll;
 local fGetPowerEffortRoll;
 local fApplyDamageToChunk;
 local fApplyDamageToTarget;
+local fDecodeDamageText;
 
 function onInit()
     fGetEffortRoll = ActionEffort.getRoll;
     fGetPowerEffortRoll = ActionEffort.getPowerRoll;
     fApplyDamageToChunk = ActionEffort.applyDamageToChunk;
     fApplyDamageToTarget = ActionEffort.applyDamageToTarget;
+    fDecodeDamageText = ActionEffort.decodeDamageText;
     ActionEffort.getRoll = getRoll;
     ActionEffort.getPowerRoll = getPowerRoll;
     ActionEffort.performNPCRoll = performNPCRoll;
     ActionEffort.applyDamageToChunk = applyDamageToChunk;
     ActionEffort.applyDamageToTarget = applyDamageOrStun;
+    ActionEffort.decodeDamageText = decodeDamageText;
 end
 
+-------------------------------------
 -- GETTING ROLLS
+-------------------------------------
 
 function getRoll(rActor, sStat, sDie, nTargetDC, bSecretRoll)
     local rRoll = fGetEffortRoll(rActor, sStat, sDie, nTargetDC, bSecretRoll);
@@ -24,12 +29,12 @@ function getRoll(rActor, sStat, sDie, nTargetDC, bSecretRoll)
 end
 
 function getPowerRoll(rActor, rAction, bHeal) 
+    rRoll.sDesc = rRoll.sDesc .. " [" .. dmgtype:upper() .. "]";
 	local rRoll = fGetPowerEffortRoll(rActor, rAction, bHeal);
     local dmgtype = "STUN"
     if rAction.sEffortTarget == "hp" then
         dmgtype = "HP";
     end
-    rRoll.sDesc = rRoll.sDesc .. " [" .. dmgtype:upper() .. "]";
     VigilanteCity.encodeEffortAndStun(rRoll);
     return rRoll;
 end
@@ -39,43 +44,47 @@ function performNPCRoll(draginfo, rActor, rRoll)
 		rRoll.bSecret = true;
 	end
     VigilanteCity.encodeEffortAndStun(rRoll);
+    ActionEffort.encodeDamageTypes(rRoll, true);
 
 	ActionsManager.performAction(draginfo, rActor, rRoll);
 end
 
+--------------------------------
 --- APPLYING DAMAGE
+--------------------------------
 
-function applyDamageToChunk(rSource, rTarget, bSecret, sDamage, nTotal)
+function applyDamageToChunk(rSource, rTarget, bSecret, rDamageOutput)
     local bChunkDmgOption = OptionsManager.getOption("DTFC");
-    local bStun = string.match(sDamage, "%[STUN%]");
-    local bHP = string.match(sDamage, "%[HP%]");
+    local bStun = rDamageOutput.bStun;
+    local bHP = rDamageOutput.bHP;
     
     if bChunkDmgOption == "both" and (bStun or bHP) then
-        fApplyDamageToChunk(rSource, rTarget, bSecret, sDamage, nTotal);
+        fApplyDamageToChunk(rSource, rTarget, bSecret, rDamageOutput);
     elseif bChunkDmgOption == "hp" and bHP then
-        fApplyDamageToChunk(rSource, rTarget, bSecret, sDamage, nTotal);
+        fApplyDamageToChunk(rSource, rTarget, bSecret, rDamageOutput);
     elseif bChunkDmgOption == "sp" and bStun then
-        fApplyDamageToChunk(rSource, rTarget, bSecret, sDamage, nTotal);
+        fApplyDamageToChunk(rSource, rTarget, bSecret, rDamageOutput);
     else
 	    ActionEffort.messageDamage(rSource, rTarget, bSecret, false, "0", "");        
     end
 end
 
-function applyDamageOrStun(rSource, rTarget, bSecret, sDamage, nTotal)
-    local bStun = string.match(sDamage, "%[STUN%]");
-    local bHP = string.match(sDamage, "%[HP%]");
-    local bHeal = string.match(sDamage, "%[HEAL%]") or nTotal < 0;
+-- Replaces applyDamageToTarget()
+function applyDamageOrStun(rSource, rTarget, bSecret, rDamageOutput)
+    local bStun = rDamageOutput.bStun;
+    local bHP = rDamageOutput.bHP;
+    local bHeal = rDamageOutput.sType == "heal";
 
     local nodeTarget = ActorManager.getCreatureNode(rTarget);
     local nTotalStun = DB.getValue(nodeTarget, "health.stun", 0);
     
     -- if stun is explicitly set, or HP is NOT explicitly set
     if bStun or (not bHP) then
-        applyStunToTarget(rSource, rTarget, bSecret, sDamage, nTotal);
+        applyStunToTarget(rSource, rTarget, bSecret, rDamageOutput);
     end
     -- If HP is present, also deduct that. This is so that you deduct from both resources on the same roll. Mostly used by NPCs.
     if bHP then
-        fApplyDamageToTarget(rSource, rTarget, bSecret, sDamage, nTotal);
+        fApplyDamageToTarget(rSource, rTarget, bSecret, rDamageOutput);
         -- If option is set, apply 1 STUN with HP damage
         -- But don't do this is the target's max stun is 0.
         local bApplyStunOnHP = OptionsManager.getOption("HPDS") == "on";
@@ -85,17 +94,20 @@ function applyDamageOrStun(rSource, rTarget, bSecret, sDamage, nTotal)
             -- The character's max STUN is more than 0
             -- This is not a heal
         if bApplyStunOnHP and (not bStun) and (nTotalStun > 0) and (not bHeal) then
-            applyStunToTarget(rSource, rTarget, bSecret, "[DRAIN]", 0);
+            rDamageOutput.bDrain = true;
+            applyStunToTarget(rSource, rTarget, bSecret, rDamageOutput);
         end
     end
 end
 
-function applyStunToTarget(rSource, rTarget, bSecret, sDamage, nTotal)
+-- Copy of applyDamageToTarget()
+function applyStunToTarget(rSource, rTarget, bSecret, rDamageOutput)
     local nodeTarget = ActorManager.getCreatureNode(rTarget);
-	local bHeal = string.match(sDamage, "%[HEAL%]") or nTotal < 0;
-    local bDrain = string.match(sDamage, "%[DRAIN%]");
+	local bHeal = rDamageOutput.sType == "heal";
+    local bDrain = rDamageOutput.bDrain;
     local bImpervious = false;
 
+    local nTotal = rDamageOutput.nVal;
 	local nTotalStun, nStunDmg, nRemainder;
 	nTotalStun = DB.getValue(nodeTarget, "health.stun", 0);
 	nStunDmg = DB.getValue(nodeTarget, "health.stundmg", 0);
@@ -112,32 +124,12 @@ function applyStunToTarget(rSource, rTarget, bSecret, sDamage, nTotal)
 			nStunDmg = math.max(nStunDmg - math.abs(nTotal), 0);
 			table.insert(aNotifications, " [HEALING]");
 		end
+    elseif bDrain then
+        table.insert(aNotifications, "[DRAIN]");
+        nTotal = 1;
+        nStunDmg = math.max(nStunDmg + nTotal, 0);
 	else
-        -- if NPC has max 0 HP, then it is immune to all damage
-        if not ActorManager.isPC(rTarget) and nTotalStun <= 0 then
-            nTotal = 0;
-            bImpervious = true;
-            table.insert(aNotifications, "[IMPERVIOUS]");
-        end
-
-        if nTotal > 0 then
-            local piercing = sDamage:match("%[PIERCING%]");
-            if piercing == nil and bDrain == nil then
-                -- Get DR or DT effects
-                local nDR = 0;
-                local nDT = 0;
-                nDR, nDT = ActionEffort.getDamageReduction(rSource, rTarget, nTotal);		
-                -- Modify and apply wounds
-                if nDR ~= 0 then
-                    table.insert(aNotifications, "[REDUCED]");
-                    nTotal = math.max(nTotal - math.abs(nDR), 0);
-                end
-                if nDT ~= 0 and nTotal  < nDT then
-                    table.insert(aNotifications, "[GLANCING]");
-                    nTotal = 0;
-                end
-            end
-        end
+        nTotal, nStunDmg, nRemainder = ActionEffort.calculateDamage(rTarget, rSource, rDamageOutput, nTotalStun, nStunDmg, aNotifications);
 
         -- Handle misses always dealing 1 damage
         local bDamageState = DamageState.getDamageState(rSource, rTarget);
@@ -148,8 +140,6 @@ function applyStunToTarget(rSource, rTarget, bSecret, sDamage, nTotal)
             nTotal = 1;
             table.insert(aNotifications, "[DRAIN]");
         end
-
-        nStunDmg = math.max(nStunDmg + nTotal, 0);
 	end
 
     -- always notify that this was applied to stun 
@@ -198,4 +188,15 @@ function applyStunToTarget(rSource, rTarget, bSecret, sDamage, nTotal)
 			end
 		end
 	end
+end
+
+------------------------------
+-- DECODING
+------------------------------
+function decodeDamageText(nDamage, sDamageDesc)
+    local rDamageOutput = fDecodeDamageText(nDamage, sDamageDesc);
+    rDamageOutput.bDrain = string.match(sDamageDesc, "%[DRAIN%]");
+    rDamageOutput.bHP = string.match(sDamageDesc, "%[HP%]");
+    rDamageOutput.bStun = string.match(sDamageDesc, "%[STUN%]");
+    return rDamageOutput;
 end

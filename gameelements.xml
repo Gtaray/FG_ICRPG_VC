@@ -32,7 +32,4 @@
 		<icon>d20icon</icon>
 		<position>390,-68</position>
 	</die>
-
-	<!-- Settings to Remove From Core -->
-	<die name="dF" merge="delete" />
 </root>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <root version="3.3" release="1.0">
-	<announcement text="Booting up Vigilante City" font="emotefont" />
+	<announcement text="Loaded Vigilante City" font="emotefont" />
 	<properties>
 		<name>ICRPG - Vigilante City</name>
 		<version>1.0</version>

@@ -12,12 +12,13 @@ function onInit()
     fEncodeEffort = ActionsManager2.encodeEffort;
 
     -- Look for mastery extension, and update function pointers
-    for _,e in pairs(Extension.getExtensions()) do
-        if e == "ICRPG_Mastery" then
-            bMasteryLoaded = true;
-            fGetPCPowerAction = Mastery.getPCPowerActionWithMastery;
-        end
-    end
+        -- Shouldn't be needed, since mastery is loaded first
+    -- for _,e in pairs(Extension.getExtensions()) do
+    --     if e == "ICRPG_Mastery" then
+    --         bMasteryLoaded = true;
+    --         fGetPCPowerAction = Mastery.getPCPowerActionWithMastery;
+    --     end
+    -- end
 
     PowerManager.getPCPowerAction = getPCPowerAction;
     ActionsManager2.encodeEffort = encodeEffortAndStun;
