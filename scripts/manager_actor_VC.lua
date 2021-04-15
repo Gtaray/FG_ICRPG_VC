@@ -1,4 +1,4 @@
-function getStunPercent(v)
+function (v)
     local rActor = ActorManager.resolveActor(v);
     local bIsPC = ActorManager.isPC(rActor);
 

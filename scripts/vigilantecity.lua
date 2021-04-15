@@ -7,18 +7,18 @@ local fGetPCPowerAction;
 local fEncodeEffort;
 
 function onInit()
+    -- Set up a new HP Resource
+    DataCommon.addHealthResource(
+        "stun", 
+        "health.stun", 
+        "health.stunmax", 
+        ActionStun.updateStunConditions,
+        ActionStun.handleMinimumStunDmg);
+    DataCommon.setDefaultHealthResource("stun");
+
     -- Initialize function pointers
     fGetPCPowerAction = PowerManager.getPCPowerAction;
     fEncodeEffort = ActionsManager2.encodeEffort;
-
-    -- Look for mastery extension, and update function pointers
-        -- Shouldn't be needed, since mastery is loaded first
-    -- for _,e in pairs(Extension.getExtensions()) do
-    --     if e == "ICRPG_Mastery" then
-    --         bMasteryLoaded = true;
-    --         fGetPCPowerAction = Mastery.getPCPowerActionWithMastery;
-    --     end
-    -- end
 
     PowerManager.getPCPowerAction = getPCPowerAction;
     ActionsManager2.encodeEffort = encodeEffortAndStun;
