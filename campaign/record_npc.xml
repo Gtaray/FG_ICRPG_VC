@@ -16,12 +16,4 @@
 			</number_columnh>
 		</sheetdata>
 	</windowclass>
-
-	<windowclass name="npc_power" merge="join">
-		<sheetdata>
-			<basicstring name="desc" merge="join">
-				<script file="campaign/scripts/npc_action.lua" />
-			</basicstring>
-		</sheetdata>
-	</windowclass>
 </root>

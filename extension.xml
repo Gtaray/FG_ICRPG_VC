@@ -35,9 +35,6 @@
 		<!-- Scripts -->
 		<script name="VigilanteCity" file="scripts/vigilantecity.lua" />
 		<script name="ActionStun" file="scripts/manager_action_stun.lua" />
-		<script name="ActionAttempt2" file="scripts/manager_action_attempt2.lua" />
-		<script name="ActorManagerVC" file="scripts/manager_actor_VC.lua" />
-		<script name="DamageState" file="scripts/damageState.lua" />
 		<script name="EffectManagerVC" file="scripts/manager_effect_VC.lua" />
 	</base>
 </root>

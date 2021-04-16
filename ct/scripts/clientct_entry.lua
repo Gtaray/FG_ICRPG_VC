@@ -16,15 +16,14 @@ end
 
 function onHealthChanged()
 	local rActor = ActorManager.resolveActor(getDatabaseNode())
-	local _,sStatus,sColor = ActorHealthManager.getHealthInfo(rActor);
+	local sColor = HealthManager.getHealthColor(rActor, "hp");
 	
 	wounds.setColor(sColor);
 end
 
 function onStunChanged()
     local rActor = ActorManager.resolveActor(getDatabaseNode())
-    local nPercentWounded,sStatus = ActorManagerVC.getStunPercent(rActor);
-	local sColor = ColorManager.getHealthColor(nPercentWounded, false);
+    local sColor = HealthManager.getHealthColor(rActor, "stun");
 
 	status.setColor(sColor);
 	stundmg.setColor(sColor);

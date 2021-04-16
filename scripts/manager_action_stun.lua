@@ -1,37 +1,34 @@
-local fGetEffortRoll;
-local fGetPowerEffortRoll;
+local fModEffort;
 local fApplyDamageToChunk;
 local fApplyDamageToTarget;
 local fDecodeDamageText;
 
-function onInit()
-    fGetPowerEffortRoll = ActionEffort.getPowerRoll;
-    ActionEffort.getPowerRoll = getPowerRoll;
-    
+function onInit() 
+    -- Handle the mod stack hp/stun buttons modifying existing effort rolls
+    fModEffort = ActionEffort.modEffort;
+    ActionsManager.registerModHandler("effort", modEffortAndStun);
+
+    -- In order to check what health resource can be applied to chunks
     fApplyDamageToChunk = ActionEffort.applyDamageToChunk;
     ActionEffort.applyDamageToChunk = applyDamageToChunk;
 
+    -- Handle DRAIN and minimum damage
     fApplyDamageToTarget = ActionEffort.applyDamageToTarget;
     ActionEffort.applyDamageToTarget = applyDamageToTarget;
     
+    -- Only for handling DRAIN tag
     fDecodeDamageText = ActionEffort.decodeDamageText;
     ActionEffort.decodeDamageText = decodeDamageText;
 end
 
--------------------------------------
--- GETTING ROLLS
--------------------------------------
-
--- Adds health resource tag
-function getPowerRoll(rActor, rAction, bHeal) 
-    local sRes = "stun"
-    if rAction.sEffortTarget == "hp" then
-        sRes = "hp";
-    end
-    rRoll.aHealthResource = { sRes };
-    local rRoll = fGetPowerEffortRoll(rActor, rAction, bHeal);
-    return rRoll;
+-----------------------------------
+-- PERFORM EFFORT ROLLS
+-----------------------------------
+function modEffortAndStun(rSource, rTarget, rRoll)
+    ActionsManager2.encodeEffort(rRoll, true)
+    fModEffort(rSource, rTarget, rRoll);
 end
+
 --------------------------------
 --- APPLYING DAMAGE
 --------------------------------
@@ -56,22 +53,21 @@ end
 
 -- We inject this function here specifically to track DRAIN
 function applyDamageToTarget(rSource, rTarget, bSecret, rDamageOutput)
-    local bStun = StringManager.contains(rDamageOutput.aHealthResources, "stun");
-    local bHP = StringManager.contains(rDamageOutput.aHealthResources, "hp");
-    local bHeal = rDamageOutput.sType == "heal";
-
-    local nCurStun, nMaxStun = ActorManagerICRPG.getHealthResource(rTarget, "stun");
-
     fApplyDamageToTarget(rSource, rTarget, bSecret, rDamageOutput);
 
-    -- if this was HP damage and NOT stun damage, and NOT a heal
-    -- then check to see if we should apply drain
-    if bHP and (not bStun) and (not bHeal) then
-        -- If option is set, apply 1 STUN with HP damage
-        -- But don't do this is the target's max stun is 0.
-        if OptionsManager.getOption("HPDS") == "on" then
+    -- If option is set, apply 1 STUN with HP damage
+    if OptionsManager.getOption("HPDS") == "on" then
+        -- if this was HP damage and NOT stun damage, and NOT a heal
+        -- then check to see if we should apply drain
+        local _,nMaxStun = ActorManagerICRPG.getHealthResource(rTarget, "stun");
+        local bStun = StringManager.contains(rDamageOutput.aHealthResources, "stun");
+        local bHP = StringManager.contains(rDamageOutput.aHealthResources, "hp");
+        local bHeal = rDamageOutput.sType == "heal";
+
+        if bHP and (not bStun) and (not bHeal) and (not rDamageOutput.bCost) then
+            -- But don't do this is the target's max stun is 0.
             if nMaxStun > 0 then
-                applyDrain(rSource, rTarghet, bSecret)
+                applyDrain(rSource, rTarget, bSecret)
             end
         end
     end
@@ -81,13 +77,11 @@ end
 -- Handles making sure at least 1 STUN damage is done when taking damage.
 -- Also handles DRAIN dmg
 function handleMinimumStunDmg(rSource, rTarget, nDmg, nCurDmg, nMax, nRemainder, aNotifications, rDamageOutput)
-    -- Handle misses always dealing 1 damage
-    local bDamageState = ActionAttempt.getAttackState(rSource, rTarget);
-    local bApplyMinStun = OptionsManager.getOption("MINS") == "on";
-
     -- if this damage is a result of DRAIN or because the damage min is hit
     -- then set to 1 and add the drain tag
-    if rDamageOutput.bDrain or (bApplyMinStun and (bDamageState == false or nDmg == 0)) then
+    -- The drain tag is used here so that any damage tagged DRAIN will bypass all damage reduction and calculations that might occur.
+    local bDamageState = ActionAttempt.getAttackState(rSource, rTarget);
+    if rDamageOutput.bDrain or (bApplyMinStun and nDmg == 0) then
         -- check target is not impervious to all damage
         if nMax >= 0 then
             nDmg = 1;
@@ -99,7 +93,7 @@ function handleMinimumStunDmg(rSource, rTarget, nDmg, nCurDmg, nMax, nRemainder,
         end
     end
 
-    return nDmg, nCurDmg, nRemainder;
+    return nDmg, nCurDmg, nRemainder
 end
 
 -- Simply applies 1 damage with the DRAIN tag

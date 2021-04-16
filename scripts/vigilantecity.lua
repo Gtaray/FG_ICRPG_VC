@@ -2,25 +2,31 @@
 -- Please see the license.html file included with this distribution for 
 -- attribution and copyright information.
 --
-bMasteryLoaded = false;
+local fOnAttempt;
 local fGetPCPowerAction;
+local fGetPowerRoll;
 local fEncodeEffort;
 
 function onInit()
     -- Set up a new HP Resource
     DataCommon.addHealthResource(
         "stun", 
+        "health.stundmg", 
         "health.stun", 
-        "health.stunmax", 
         ActionStun.updateStunConditions,
+        getStunPercent,
         ActionStun.handleMinimumStunDmg);
     DataCommon.setDefaultHealthResource("stun");
+    DataCommon.addHealthResourceAlias("stun", "sp");
 
     -- Initialize function pointers
-    fGetPCPowerAction = PowerManager.getPCPowerAction;
-    fEncodeEffort = ActionsManager2.encodeEffort;
+    ActionsManager.registerResultHandler("attempt", handleDrainOnFailedAttempt);
+    fOnAttempt = ActionAttempt.onAttempt;
 
+    fGetPCPowerAction = PowerManager.getPCPowerAction;
     PowerManager.getPCPowerAction = getPCPowerAction;
+    
+    fEncodeEffort = ActionsManager2.encodeEffort;
     ActionsManager2.encodeEffort = encodeEffortAndStun;
 
     registerOptions();
@@ -38,25 +44,50 @@ function registerOptions()
     {	labels = "option_val_hpdmg|option_val_hpspdmg", values = "hp|both", baselabel = "option_val_spdmg", baseval = "sp", default = "both" });
 end
 
+------------------------------------------
+-- Handle Drain on failed attempt
+------------------------------------------
+function handleDrainOnFailedAttempt(rSource, rTarget, rRoll)
+    fOnAttempt(rSource, rTarget, rRoll);
+
+    local bDamageState = ActionAttempt.getAttackState(rSource, rTarget);
+    local bApplyMinStun = OptionsManager.getOption("MINS") == "on";
+
+    -- if the attack missed, then apply DRAIN
+    if bApplyMinStun and bDamageState == false then
+        ActionStun.applyDrain(rSource, rTarget, bSecret);
+    end
+end
+
+-- Adds health resource to the action
 function getPCPowerAction(nodeAction)
     local rAction, rActor = fGetPCPowerAction(nodeAction);
 
     if rAction.type == "attempt" then
         local cs = nodeAction.getChild("costsource");
         if cs then
-            rAction.sCostSource = cs.getValue();
+            rAction.sCostHealthResource = cs.getValue();
         end
     end
     if rAction.type == "effort" then
         local nodeTarget = nodeAction.getChild("efforttarget");
         if nodeTarget then
-            rAction.sEffortTarget = nodeTarget.getValue()
+            local sHealthRes = nodeTarget.getValue()
+            if sHealthRes == "" then
+                sHealthRes = "stun"
+            end
+            if sHealthRes then
+                rAction.aHealthResource = { sHealthRes };
+            end
         end
     end
     if rAction.type == "heal" then
         local nodeTarget = nodeAction.getChild("efforttarget");
         if nodeTarget then
-            rAction.sEffortTarget = nodeTarget.getValue()
+            local sHealthRes = nodeTarget.getValue()
+            if sHealthRes then
+                rAction.aHealthResource = { sHealthRes };
+            end
         end
     end
 
@@ -66,7 +97,6 @@ end
 -- This does base encoding. Both the modifier buttons, as well as making
 -- sure that all effort has HP or STUN tags.
 function encodeEffortAndStun(rRoll, bEffort)
-
     -- Add HP or STUN based on button
     local bHp = ModifierStack.getModifierKey("EFFORT");
     local bStun = ModifierStack.getModifierKey("STUN");
@@ -173,4 +203,59 @@ function setVP(nodeActor, nVP)
             v.setValue(0);
         end
     end
+end
+
+-----
+function getStunPercent(v, sHealthResource)
+    local rActor = ActorManager.resolveActor(v);
+    local bIsPC = ActorManager.isPC(rActor);
+
+    if not sHealthResource then
+        sHealthResource = "stun";
+    end
+    
+    local nCur, nMax = ActorManagerICRPG.getHealthResource(rActor, sHealthResource);
+
+    local nodeActor = ActorManager.getCreatureNode(rActor);
+    if not nodeActor then
+        return 0, "";
+    end
+    
+    local nPercentWounded = 0;
+    if nMax > 0 then
+        nPercentWounded = nCur / nMax;
+    end
+    
+    local sStatus;
+    if not Session.IsHost and (not bIsPC) then
+        sStatus = DB.getValue(nodeActor, "status", "");
+    else
+        if nPercentWounded > 1 then
+            sStatus = "Stunned";
+        elseif nPercentWounded == 1 then
+            sStatus = "Fatigued";
+        elseif OptionsManager.isOption("WNDC", "detailed") then
+            if nPercentWounded >= .75 then
+                sStatus = ActorHealthManager.STATUS_CRITICAL;
+            elseif nPercentWounded >= .5 then
+                sStatus = ActorHealthManager.STATUS_HEAVY;
+            elseif nPercentWounded >= .25 then
+                sStatus = ActorHealthManager.STATUS_MODERATE;
+            elseif nPercentWounded > 0 then
+                sStatus = ActorHealthManager.STATUS_LIGHT;
+            else
+                sStatus = ActorHealthManager.STATUS_HEALTHY;
+            end
+        else
+            if nPercentWounded >= .5 then
+                sStatus = ActorHealthManager.STATUS_SIMPLE_HEAVY;
+            elseif nPercentWounded > 0 then
+                sStatus = ActorHealthManager.STATUS_SIMPLE_WOUNDED;
+            else
+                sStatus = ActorHealthManager.STATUS_HEALTHY;
+            end
+        end
+    end
+    
+    return nPercentWounded, sStatus;
 end

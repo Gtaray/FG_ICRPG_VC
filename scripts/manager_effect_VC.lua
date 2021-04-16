@@ -49,7 +49,7 @@ function applyOngoingDamageAdjustment(nodeActor, nodeEffect, rEffectComp)
         end
         ActionsManager.actionDirect(nil, "effort", { rRoll }, { { rTarget } });
     elseif sType == "stunregen" then
-        local nPercentStunned = ActorManagerVC.getStunPercent(nodeActor);
+        local nPercentStunned = VigilanteCity.getStunPercent(nodeActor);
 
         if nPercentStunned <= 0 then
             return;
