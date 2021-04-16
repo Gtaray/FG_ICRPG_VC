@@ -41,11 +41,11 @@ function applyDamageToChunk(rSource, rTarget, bSecret, rDamageOutput)
     local bHP = StringManager.contains(rDamageOutput.aHealthResources, "hp");
     
     if bChunkDmgOption == "both" and (bStun or bHP) then
-        fApplyDamageToChunk(rSource, rTarget, bSecret, rDamageOutput);
+        return fApplyDamageToChunk(rSource, rTarget, bSecret, rDamageOutput);
     elseif bChunkDmgOption == "hp" and bHP then
-        fApplyDamageToChunk(rSource, rTarget, bSecret, rDamageOutput);
+        return fApplyDamageToChunk(rSource, rTarget, bSecret, rDamageOutput);
     elseif bChunkDmgOption == "sp" and bStun then
-        fApplyDamageToChunk(rSource, rTarget, bSecret, rDamageOutput);
+        return fApplyDamageToChunk(rSource, rTarget, bSecret, rDamageOutput);
     else
 	    ActionEffort.messageDamage(rSource, rTarget, bSecret, false, "0", "");        
     end
@@ -53,7 +53,7 @@ end
 
 -- We inject this function here specifically to track DRAIN
 function applyDamageToTarget(rSource, rTarget, bSecret, rDamageOutput)
-    fApplyDamageToTarget(rSource, rTarget, bSecret, rDamageOutput);
+    local nDmg, nRemainder = fApplyDamageToTarget(rSource, rTarget, bSecret, rDamageOutput);
 
     -- If option is set, apply 1 STUN with HP damage
     if OptionsManager.getOption("HPDS") == "on" then
@@ -71,28 +71,28 @@ function applyDamageToTarget(rSource, rTarget, bSecret, rDamageOutput)
             end
         end
     end
+
+    return nDmg, nRemainder;
 end
 
 -- Custom ApplyDmg function for STUN health resource.
 -- Handles making sure at least 1 STUN damage is done when taking damage.
 -- Also handles DRAIN dmg
-function handleMinimumStunDmg(rSource, rTarget, nDmg, nCurDmg, nMax, nRemainder, aNotifications, rDamageOutput)
+function handleMinimumStunDmg(rSource, rTarget, nDmg, nInitialDmg, nCurDmg, nMax, nRemainder, aNotifications, rDamageOutput)
     -- if this damage is a result of DRAIN or because the damage min is hit
     -- then set to 1 and add the drain tag
     -- The drain tag is used here so that any damage tagged DRAIN will bypass all damage reduction and calculations that might occur.
-    local bDamageState = ActionAttempt.getAttackState(rSource, rTarget);
     if rDamageOutput.bDrain or (bApplyMinStun and nDmg == 0) then
         -- check target is not impervious to all damage
         if nMax >= 0 then
             nDmg = 1;
-            nCurDmg = nCurDmg + 1;
+            nCurDmg = nInitialDmg + 1;
             if nCurDmg > nMax then
                 nRemainder = nCurDmg - nMax;
             end
             table.insert(aNotifications, "[DRAIN]");
         end
     end
-
     return nDmg, nCurDmg, nRemainder
 end
 
